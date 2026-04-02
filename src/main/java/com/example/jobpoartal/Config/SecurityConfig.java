@@ -35,7 +35,8 @@ private JwtFilter jwtFilter;
     public SecurityFilterChain filterChain(HttpSecurity http) throws  Exception{
         http.csrf(csrf->csrf.disable())
                 .authorizeHttpRequests(auth->auth.
-                        requestMatchers("/api/newUser/Register","/api/newUser/login")
+                        requestMatchers("/api/newUser/Register","/api/newUser/login","/swagger-ui/index.html"
+                        ,"/auth/**", "/v3/api-docs/**", "/swagger-ui/**")
                         .permitAll()
                         .requestMatchers("/Api/","/job/**","/api/users/**","/applications/**")
                         .hasRole("USER")

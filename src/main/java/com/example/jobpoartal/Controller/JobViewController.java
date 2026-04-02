@@ -1,7 +1,7 @@
 package com.example.jobpoartal.Controller;
 
 import com.example.jobpoartal.Dto.JobApplicationResponseDto;
-import com.example.jobpoartal.Service.JobAssigningService;
+import com.example.jobpoartal.Service.JobAdminViewService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,7 +17,7 @@ public class JobViewController {
 
 
     @Autowired
-    public JobAssigningService jobApplicationService;
+    public JobAdminViewService jobApplicationService;
 
     @GetMapping("/jobs")
     public ResponseEntity<List<JobApplicationResponseDto>>jobapplication(){

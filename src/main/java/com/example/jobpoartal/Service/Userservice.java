@@ -2,8 +2,11 @@ package com.example.jobpoartal.Service;
 
 import com.example.jobpoartal.Dto.UserRequestDto;
 import com.example.jobpoartal.Dto.UserResponseDto;
+import com.example.jobpoartal.Dto.UserUpdateRequetDto;
+import com.example.jobpoartal.Dto.UserUpdateResponseDto;
 import com.example.jobpoartal.Enum.ROLES;
 import com.example.jobpoartal.Entity.Users;
+import com.example.jobpoartal.Mapper.UpdateUserMapper;
 import com.example.jobpoartal.Mapper.UserMapper;
 import com.example.jobpoartal.Repositories.UserRepository;
 import com.example.jobpoartal.Security.JwtService;
@@ -22,20 +25,36 @@ import java.util.Optional;
 @Service
 public class Userservice {
 
-    @Autowired
+
     private UserRepository Urepo;
 
-    @Autowired
+
     private UserMapper userMapper;
 
-    @Autowired
+
     private AuthenticationManager authenticationManager;
 
-    @Autowired
+
+    private UpdateUserMapper updateUserMapper;
+
+
     private PasswordEncoder encoder;
 
-    @Autowired
+
     private JwtService jwtService;
+
+@Autowired
+    public Userservice(UserRepository urepo, UserMapper userMapper,
+                       AuthenticationManager authenticationManager,
+                       UpdateUserMapper updateUserMapper,
+                       PasswordEncoder encoder, JwtService jwtService) {
+        Urepo = urepo;
+        this.userMapper = userMapper;
+        this.authenticationManager = authenticationManager;
+        this.updateUserMapper = updateUserMapper;
+        this.encoder = encoder;
+        this.jwtService = jwtService;
+    }
 
     //for register
     public UserResponseDto registeruser(UserRequestDto Reqdto){
@@ -83,8 +102,9 @@ return userMapper.todto(savedUser);
 
 
 
+
     //for update
-    public UserResponseDto updateUser(UserRequestDto userdt, Userdetails principal){
+    public UserUpdateResponseDto updateUser(UserUpdateRequetDto userdt, Userdetails principal){
 
         Users loggeduser=  principal.getUsers();
         var existingUsers =Urepo.findById(loggeduser.getId()).orElseThrow(()->new RuntimeException("User not found "));
@@ -93,8 +113,12 @@ existingUsers.setName(userdt.getName());
 existingUsers.setPassword(encoder.encode(userdt.getPassword()));
 existingUsers.setEmail(userdt.getEmail());
 existingUsers.setUpdatedAt(LocalDateTime.now());
+existingUsers.setPhone_no(userdt.getPhone_no());
+existingUsers.setAddress(userdt.getAddress());
+existingUsers.setCity(userdt.getCity());
 Users updateUser=Urepo.save(existingUsers);
-return userMapper.todto(updateUser);
+
+return  updateUserMapper.todto(updateUser);
     }
 
 

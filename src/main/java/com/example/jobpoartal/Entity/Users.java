@@ -9,7 +9,7 @@ import java.util.List;
 
 //for all users including user,admin
 
-@Entity
+@Entity(name="profile")
 public class Users {
 
     @Id
@@ -28,9 +28,40 @@ public class Users {
 
    private LocalDateTime updatedAt;
 
+   private String Address;
+
+   private String city;
+
+   private int phone_no;
+
+
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
     private List<ROLES>roles=new ArrayList<>();
+
+    public String getAddress() {
+        return Address;
+    }
+
+    public void setAddress(String address) {
+        Address = address;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public int getPhone_no() {
+        return phone_no;
+    }
+
+    public void setPhone_no(int phone_no) {
+        this.phone_no = phone_no;
+    }
 
     public List<ROLES> getRoles() {
         return roles;

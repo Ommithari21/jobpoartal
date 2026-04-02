@@ -22,7 +22,8 @@ public Long getUserid(){
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return users.getRoles().stream().map(role -> new SimpleGrantedAuthority("ROLE_"+ role.name())).toList() ;
+        return users.getRoles().stream().map(role ->
+                new SimpleGrantedAuthority("ROLE_"+ role.name())).toList() ;
 
     }
 

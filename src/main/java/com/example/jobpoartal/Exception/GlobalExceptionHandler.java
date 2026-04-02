@@ -27,7 +27,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String,Object>>cep(Exception ex){
     Map<String,Object>cal=new HashMap<>();
     cal.put("timestamp", LocalDateTime.now());
-    cal.put("error", ex.getMessage());cal.put("status",HttpStatus.INTERNAL_SERVER_ERROR.value());
+    cal.put("error", ex.getMessage());
+    cal.put("status",HttpStatus.INTERNAL_SERVER_ERROR.value());
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(cal);
 
     }

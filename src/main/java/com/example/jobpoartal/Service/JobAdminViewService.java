@@ -5,16 +5,14 @@ import com.example.jobpoartal.Entity.JobApplication;
 import com.example.jobpoartal.Mapper.JobApplicationMapper;
 import com.example.jobpoartal.Repositories.JobApplicationRepository;
 import com.example.jobpoartal.Repositories.JobRepository;
-import com.example.jobpoartal.Security.Userdetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class JobAssigningService {
+public class JobAdminViewService {
 
     @Autowired
     private JobApplicationRepository jobApplicationRepository;
