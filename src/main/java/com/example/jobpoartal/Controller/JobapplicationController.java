@@ -9,6 +9,7 @@ import com.example.jobpoartal.Repositories.JobApplicationRepository;
 import com.example.jobpoartal.Security.Userdetails;
 import com.example.jobpoartal.Service.JobApplicationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -17,7 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.List;
 
-import static io.jsonwebtoken.Jwts.header;
 
 @RestController
 @RequestMapping("/job")
@@ -49,6 +49,7 @@ public class JobapplicationController
             String filename= job.getResume();
 
             return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
                     .header("Content-Disposition", "attachment; filename=\"" + filename + "\"")
                     .body(FileBytes);
 

@@ -14,16 +14,16 @@ import com.example.jobpoartal.Repositories.JobRepository;
 import com.example.jobpoartal.Repositories.UserRepository;
 import com.example.jobpoartal.Security.Userdetails;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
-
 
 @Service
 public class JobApplicationService {
@@ -36,87 +36,84 @@ public class JobApplicationService {
 
     @Autowired
     private JobApplicationMapper jobApplicationMapper;
-@Autowired
-    private JobCreatingMapper jobCreatingMapper;
 
+    @Autowired
+    private JobCreatingMapper jobCreatingMapper;
 
     @Autowired
     private JobRepository jobRepository;
 
+    // Automatically inject your custom configured S3Client bean
+    @Autowired
+    private S3Client s3Client;
 
-    private final String uploddir="C:\\jobpoartal\\uploads\\";
+    // Only inject the bucket name string here
+    @Value("${aws.s3.bucket-name}")
+    private String bucketName;
 
-
-    //upload the file
+    // Upload file directly to AWS S3
     public JobApplicationResponseDto UploadResume(Long job_id, JobApplicationRequestDto application, MultipartFile file, Userdetails principal) throws IOException {
 
-        Users users=principal.getUsers();
-
-        Users data=userRepository.findById(users.getId()).orElseThrow(()->new RuntimeException("user not found "));
-
-        Job job= jobRepository.findById(job_id).orElseThrow(()->new RuntimeException("job is not found"));
+        Users users = principal.getUsers();
+        Users data = userRepository.findById(users.getId()).orElseThrow(() -> new RuntimeException("user not found "));
+        Job job = jobRepository.findById(job_id).orElseThrow(() -> new RuntimeException("job is not found"));
 
         boolean alreadyApplied = jobApplication.existsByUsersIdAndJobsId(data.getId(), job.getId());
         if (alreadyApplied) {
             throw new RuntimeException("You have already applied to this job.");
         }
 
-
-        // create uploads folder if not exists
-        Path path = Paths.get(uploddir);
-        if (!Files.exists(path)) {
-            Files.createDirectories(path);
-        }
-
-// generate unique filename
+        // Generate unique filename for the S3 object key
         String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename();
 
-// resolve the full path in uploads folder
-//        Path filepath = path.resolve(filename);
-//        Files.copy(file.getInputStream(), filepath); // this  is of Files utility class
+        // Upload directly from the file's input stream to S3
+        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key(filename)
+                .contentType(file.getContentType())
+                .build();
 
-        file.transferTo(new File(uploddir+filename));
+        s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
 
-// map to entity
+        // Map to entity
         JobApplication application1 = jobApplicationMapper.toentity(application);
-        application1.setResume(filename); // <-- only filename
+        application1.setResume(filename); // Store the S3 object key (filename) in your DB
         application1.setUsers(data);
         application1.setJobs(job);
         application1.setJobStatus(JobStatus.APPLIED);
 
-// save in DB
+        // Save in DB
         JobApplication savedApplication = jobApplication.save(application1);
 
-// return DTO
+        // Return DTO
         return jobApplicationMapper.todto(savedApplication);
-
     }
 
-    //for download the file
-    public byte[] download(long id,Userdetails principal) throws IOException{
-    Users user=principal.getUsers();
-    Users data=userRepository.findById(user.getId()).orElseThrow(()->new RuntimeException("invalid user"));
-    JobApplication job=jobApplication.findById(id).orElseThrow(()->new RuntimeException("Error "));
-  //  List<JobApplication> jobApplication1=jobApplication.findByJobId();
+    // Download byte arrays directly from AWS S3
+    public byte[] download(long id, Userdetails principal) throws IOException {
+        Users user = principal.getUsers();
+        userRepository.findById(user.getId()).orElseThrow(() -> new RuntimeException("invalid user"));
 
-        String filename=job.getResume();
+        JobApplication job = jobApplication.findById(id).orElseThrow(() -> new RuntimeException("Error application not found"));
+        String filename = job.getResume();
 
-        Path filepath=Paths.get(uploddir).resolve(filename);
+        try {
+            // Retrieve file from S3 bucket as a byte array
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(filename)
+                    .build();
 
-        if(!Files.exists(filepath)){
-            throw new RuntimeException("error");
-
+            return s3Client.getObjectAsBytes(getObjectRequest).asByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to download file from S3 storage: " + e.getMessage());
         }
-        return Files.readAllBytes(filepath);
     }
 
-    //used to see job status
+    // Used to see job status
     public List<JobApplicationResponseDto> seeJobStatus(Userdetails principal) {
-
         Users loggedUser = principal.getUsers();
-
-        List<JobApplication> jobs =
-                jobApplication.findAllByUsersId(loggedUser.getId());
+        List<JobApplication> jobs = jobApplication.findAllByUsersId(loggedUser.getId());
 
         if (jobs.isEmpty()) {
             throw new RuntimeException("No job applications found");
@@ -127,16 +124,11 @@ public class JobApplicationService {
                 .toList();
     }
 
-
-    //jobs from the admin
-    public List<JobcreatingResponseDto>JobsFromAdmin(String location,String type){
-List<Job>job=jobRepository.findByLocationAndType(location, type);
-
+    // Jobs from the admin
+    public List<JobcreatingResponseDto> JobsFromAdmin(String location, String type) {
+        List<Job> job = jobRepository.findByLocationAndType(location, type);
         return job.stream()
                 .map(jobCreatingMapper::todto)
                 .toList();
-
-
     }
-
-    }
+}
